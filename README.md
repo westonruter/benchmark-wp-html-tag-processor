@@ -76,4 +76,6 @@ Subjects: 2, Assertions: 0, Failures: 0, Errors: 0
 +------+-----------+-----------------------+-----+------+------------+-------------+--------------+----------------+
 ```
 
-So in these tests, using `preg_*` functions takes 2.57% as much time compared to `WP_HTML_Tag_Processor`.
+So in these tests, using `preg_*` functions takes 2.57% as much time compared to `WP_HTML_Tag_Processor`. So using
+regular expressions is indeed much faster, but at the same time they are much riskier. When deciding between the two
+we will have to weigh the pros and cons of performance versus security and correctness.
