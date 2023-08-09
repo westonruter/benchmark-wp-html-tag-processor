@@ -1,0 +1,18 @@
+{
+  "name": "westonruter/phpbench-wp-html-tag-processor",
+  "description": "Benchmarking performance of WP_HTML_Tag_Processor versus preg_replace().",
+  "license": "GPL2",
+  "authors": [
+    {
+      "name": "Weston Ruter",
+      "email": "westonruter@google.com"
+    }
+  ],
+  "require": {
+    "phpbench/phpbench": "^1.2"
+  },
+  "scripts": {
+    "download": "if [ ! -e html-api ]; then svn co http://develop.svn.wordpress.org/trunk/src/wp-includes/html-api/ html-api; else cd html-api; svn up; fi",
+    "test": "phpbench run Bench.php --report=default"
+  }
+}
