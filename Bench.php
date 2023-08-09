@@ -56,7 +56,6 @@ class Bench {
 			throw new Exception( 'Expected loading=lazy' );
 		}
 		if ( ! preg_match( '/<script[^>]+?defer/', $html ) ) {
-			echo $html;
 			throw new Exception( 'Expected defer script' );
 		}
 	}
@@ -128,31 +127,31 @@ class Bench {
 			$applied_fetchpriority = false;
 
 			$p = new WP_HTML_Tag_Processor( $html );
-			while ( $p->next_tag( 'img' ) ) {
-				$image_count++;
+			while ( $p->next_tag() ) {
+				switch ( $p->get_tag() ) {
+					case 'IMG':
+						$image_count++;
+						$width = (int) $p->get_attribute( 'width' );
+						$height = (int) $p->get_attribute( 'height' );
 
-				$width = (int) $p->get_attribute( 'width' );
-				$height = (int) $p->get_attribute( 'height' );
-
-				if ( ! $applied_fetchpriority && $width * $height >= 50000 ) {
-					$p->set_attribute( 'fetchpriority', 'high' );
-					$applied_fetchpriority = true;
-				} else if ( $image_count > 2 ) {
-					$p->set_attribute( 'loading', 'lazy' );
+						if ( ! $applied_fetchpriority && $width * $height >= 50000 ) {
+							$p->set_attribute( 'fetchpriority', 'high' );
+							$applied_fetchpriority = true;
+						} else if ( $image_count > 2 ) {
+							$p->set_attribute( 'loading', 'lazy' );
+						}
+						break;
+					case 'SCRIPT':
+						if (
+							$p->get_attribute( 'src' ) &&
+							! $p->get_attribute( 'defer' ) &&
+							! $p->get_attribute( 'async' )
+						) {
+							$p->set_attribute( 'defer', true );
+						}
+						break;
 				}
-			}
 
-			$html = $p->get_updated_html(); // TODO: This is only needed because of the next line.
-			$p = new WP_HTML_Tag_Processor( $html ); // TODO: Why can't the previous instance be reused?
-
-			while ( $p->next_tag( 'script' ) ) {
-				if (
-					$p->get_attribute( 'src' ) &&
-					! $p->get_attribute( 'defer' ) &&
-					! $p->get_attribute( 'async' )
-				) {
-					$p->set_attribute( 'defer', true );
-				}
 			}
 
 			$html = $p->get_updated_html();
