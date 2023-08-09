@@ -63,7 +63,7 @@ class Bench {
 	/**
 	 * Test using preg_replace_callback() and preg_match() to inject fetchpriority="high" and loading="lazy".
 	 */
-	function benchPregReplace(): void {
+	function benchPregReplaceDocument(): void {
 		foreach ( $this->files as $file ) {
 			$html = file_get_contents( $file );
 			$this->assertAttributesAbsent( $html );
@@ -118,7 +118,7 @@ class Bench {
 	/**
 	 * Test using WP_HTML_Tag_Processor to inject fetchpriority="high" and loading="lazy".
 	 */
-	function benchHtmlTagProcessor(): void {
+	function benchHtmlTagProcessorDocument(): void {
 		foreach ( $this->files as $file ) {
 			$html = file_get_contents( $file );
 			$this->assertAttributesAbsent( $html );
@@ -156,6 +156,62 @@ class Bench {
 
 			$html = $p->get_updated_html();
 			$this->assertAttributesPresent( $html );
+		}
+	}
+
+
+	/**
+	 * Test using preg_replace_callback() and preg_match() to inject defer into a script tag.
+	 */
+	function benchPregReplaceScriptTag(): void {
+		foreach ( $this->files as $file ) {
+			$html = '<script src="/foo.js"></script>';
+
+			$html = preg_replace_callback(
+				'#<script([^>]+)>#',
+				static function ( $matches ) {
+					$attrs = $matches[1];
+
+					$is_external = preg_match( '/\ssrc=/', $attrs );
+					$is_defer    = preg_match( '/\sdefer/', $attrs );
+					$is_async    = preg_match( '/\sasync/', $attrs );
+
+					if ( $is_external && ! $is_defer && ! $is_async ) {
+						$attrs .= ' defer';
+					}
+
+					return "<script{$attrs}>";
+				},
+				$html
+			);
+
+			if ( '<script src="/foo.js" defer></script>' !== $html ) {
+				throw new Exception( "Missing defer: $html" );
+			}
+		}
+	}
+
+	/**
+	 * Test using WP_HTML_Tag_Processor to inject defer into script tag.
+	 */
+	function benchHtmlTagProcessorScriptTag(): void {
+		$html = '<script src="/foo.js"></script>';
+
+		$p = new WP_HTML_Tag_Processor( $html );
+		while ( $p->next_tag( 'script' ) ) {
+			if (
+				$p->get_attribute( 'src' ) &&
+				! $p->get_attribute( 'defer' ) &&
+				! $p->get_attribute( 'async' )
+			) {
+				$p->set_attribute( 'defer', true );
+			}
+		}
+
+		$html = $p->get_updated_html();
+
+		if ( '<script defer src="/foo.js"></script>' !== $html ) {
+			throw new Exception( "Missing defer: $html" );
 		}
 	}
 }
