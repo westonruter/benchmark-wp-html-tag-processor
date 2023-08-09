@@ -1,4 +1,4 @@
-# Benchmark Performance of `WP_HTML_Tag_Processor` vs `preg_*`
+# Benchmark `WP_HTML_Tag_Processor` vs `preg_*`
 
 To run:
 
